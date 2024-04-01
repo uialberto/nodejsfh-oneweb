@@ -1,39 +1,23 @@
 import { Request, Response } from "express";
-
-const todos = [
-    {
-        id:1,
-        text: "Leche",
-        completedAt: new Date(),
-    },
-    {
-        id:2,
-        text: "Pan",
-        completedAt: null,
-    },
-    {
-        id:3,
-        text: "Queso",
-        completedAt: new Date(),
-    },
-];
+import { prisma } from "../../data/postgres";
+import { CreateTodoDto, UpdateTodoDto } from "../../domain/dtos";
 
 export class TodosController {
-
-    //* DI
+        
     constructor(){}
 
-    public getTodos =  (req:Request, res:Response) => {
-
+    public getTodos = async (req:Request, res:Response) => {
+        const todos = await prisma.todo.findMany();
         return res.json(todos);
 
     }
 
-    public getTodoById =  (req:Request, res:Response) => {
+    public getTodoById =  async (req:Request, res:Response) => {
 
         const id = +req.params.id;
         if(isNaN(id)) return res.status(400).json({error:`ID argument is not a number`});
-        const todo = todos.find(todo => todo.id === id);
+        
+        const todo = await prisma.todo.findFirst({where:{id}});         
         // console.log(id, 10);
         (todo)
         ? res.json({todo})
@@ -41,51 +25,46 @@ export class TodosController {
 
     }
 
-    public createTodo =  (req:Request, res:Response) => {
-
-       const {text} = req.body;
-       if( !text) return res.status(400).json({error:`Text property is required`});
-
-       const newTodo = {
-        id: todos.length + 1,
-        text: text,
-        completedAt: null
-       };
-
-       todos.push(newTodo)
-
+    public createTodo =  async (req:Request, res:Response) => {
+       const [error, createTodoDto] = CreateTodoDto.create(req.body);
+       if(error) return res.status(400).json({error});
+    //    const {text} = req.body;
+    //    if( !text) return res.status(400).json({error:`Text property is required`});
+       const newTodo = await prisma.todo.create(
+        { 
+            data: createTodoDto! 
+        });
        res.json(newTodo);
-
     }
 
-    public updateTodo =  (req:Request, res:Response) => {
+    public updateTodo = async (req:Request, res:Response) => {
 
         const id = +req.params.id;
-        if(isNaN(id)) return res.status(400).json({error:`ID argument is not a number`});
-        const todo = todos.find(todo => todo.id === id); 
-        if (!todo) return res.status(404).json({error:`TODO con ID: ${id} Not Found`});
-
-        const {text, completedAt} = req.body;
-        // if( !text) return res.status(400).json({error:`Text property is required`});
-        
-        todo.text = text || todo.text;
-        (completedAt === null)
-        ? todo.completedAt = null
-        : todo.completedAt = new Date(completedAt || todo.completedAt);        
-        res.json(todo);
- 
+        const [error, updateTodoDto] = UpdateTodoDto.create({...req.body, id});
+        if(error) return res.status(400).json({error});
+        const todo = await prisma.todo.findFirst({where:{id}});           
+        if (!todo) return res.status(404).json({error:`TODO con ID: ${id} Not Found`});                
+        const updateTodo = await prisma.todo.update({
+            where: {id},
+            data: updateTodoDto!.values
+        }); 
+        res.json(updateTodo); 
      }
 
 
-     public deleteTodo =  (req:Request, res:Response) => {
+     public deleteTodo = async  (req:Request, res:Response) => {
 
         const id = +req.params.id;
         if(isNaN(id)) return res.status(400).json({error:`ID argument is not a number`});
-        const todo = todos.find(todo => todo.id === id); 
+        const todo = await prisma.todo.findFirst({where:{id}});   
         if (!todo) return res.status(404).json({error:`TODO con ID: ${id} Not Found`});
-       todos.splice(todos.indexOf(todo), 1);     
-        res.json(todo);
- 
+        const deleted = await prisma.todo.delete({
+            where: {id}
+        });
+
+        (deleted)
+        ? res.json(deleted)
+        : res.status(400).json({error:`TODO con ID: ${id} Not Found`}); 
      }
 
 }

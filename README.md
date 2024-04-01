@@ -25,8 +25,36 @@ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout server.key -
 ```
 npm i dotenv env-var
 ```
+5. Usar PostgreSQL
+```
+npm install prisma --save-dev
+npx prisma init --datasource-provider postgresql
+```
+warn You already have a .gitignore file. Don't forget to add `.env` in it to not commit any private information.
+
+Next steps:
+1. Set the DATABASE_URL in the .env file to point to your existing database. If your database has no tables yet, read https://pris.ly/d/getting-started
+2. Run prisma db pull to turn your database schema into a Prisma schema.
+3. Run prisma generate to generate the Prisma Client. You can then start querying your database.
+
+Cambiar el ENV de DataBase en prisma/schema.prisma
+
+
+
+
+1. DATABASE FIRTS
+
+npx prisma db pull
+
+2. DATABASE MODEL FIRTS
+
+npx prisma migrate dev --name init
 
 # Run Project - DEV
 
 
 1. Clonar el Archivo .env.template y crear el archivo .env con las variables respectivas
+2. Ejecutar el Comando de Docker Compose.
+```
+docker compose up -d
+```
