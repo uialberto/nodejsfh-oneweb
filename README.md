@@ -58,3 +58,9 @@ npx prisma migrate dev --name init
 ```
 docker compose up -d
 ```
+
+
+1. INSTALL PACKAGE
+```
+npm i compression
+```
